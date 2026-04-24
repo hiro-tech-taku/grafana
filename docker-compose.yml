@@ -1,0 +1,54 @@
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-local
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
+      - ./provisioning/dashboards/sample-dashboard.json:/etc/grafana/provisioning/dashboards/sample-dashboard.json:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - json-exporter
+    restart: unless-stopped
+
+  json-exporter:
+    image: quay.io/prometheuscommunity/json-exporter:latest
+    container_name: json-exporter-local
+    ports:
+      - "7979:7979"
+    volumes:
+      - ./json_exporter.yml:/config.yml:ro
+    command:
+      - --config.file=/config.yml
+    depends_on:
+      - mock-api
+    restart: unless-stopped
+
+  mock-api:
+    build:
+      context: ./mock-api
+      dockerfile: Dockerfile
+    container_name: mock-api-local
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:

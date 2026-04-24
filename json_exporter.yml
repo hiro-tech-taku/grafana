@@ -1,0 +1,22 @@
+modules:
+  default:
+    metrics:
+      - name: server_cpu_usage
+        path: "{.cpu_usage}"
+        help: CPU usage percent
+        type: value
+
+      - name: server_memory_usage
+        path: "{.memory_usage}"
+        help: Memory usage percent
+        type: value
+
+      - name: server_disk_usage
+        path: "{.disk_usage}"
+        help: Disk usage percent
+        type: value
+
+      - name: server_status
+        path: "{.status}"
+        help: Server status
+        type: value
