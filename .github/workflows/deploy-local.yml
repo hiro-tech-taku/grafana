@@ -1,0 +1,71 @@
+name: Deploy to Local Environment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # ローカルPCのSelf-hosted Runnerで実行
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 既存コンテナを停止・削除
+      - name: Stop existing containers
+        run: docker compose down --remove-orphans
+
+      # イメージを再ビルド（mock-api の Dockerfile を含む）
+      - name: Build Docker images
+        run: docker compose build --no-cache
+
+      # バックグラウンドで起動
+      - name: Start containers
+        run: docker compose up -d
+
+      # 起動待ち（Grafana は起動に数秒かかるため）
+      - name: Wait for services to be ready
+        run: Start-Sleep -Seconds 15
+
+      # ヘルスチェック：Grafana
+      - name: Health check - Grafana
+        run: |
+          $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 10
+          if ($response.StatusCode -ne 200) {
+            Write-Error "Grafana health check failed: $($response.StatusCode)"
+            exit 1
+          }
+          Write-Host "Grafana is running: $($response.StatusCode)"
+
+      # ヘルスチェック：Prometheus
+      - name: Health check - Prometheus
+        run: |
+          $response = Invoke-WebRequest -Uri "http://localhost:9090/-/healthy" -UseBasicParsing -TimeoutSec 10
+          if ($response.StatusCode -ne 200) {
+            Write-Error "Prometheus health check failed: $($response.StatusCode)"
+            exit 1
+          }
+          Write-Host "Prometheus is running: $($response.StatusCode)"
+
+      # ヘルスチェック：Mock API
+      - name: Health check - Mock API
+        run: |
+          $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 10
+          if ($response.StatusCode -ne 200) {
+            Write-Error "Mock API health check failed: $($response.StatusCode)"
+            exit 1
+          }
+          Write-Host "Mock API is running: $($response.StatusCode)"
+
+      # デプロイ完了通知
+      - name: Deployment complete
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Deployment succeeded!"
+          Write-Host "  Grafana:    http://localhost:3000"
+          Write-Host "  Prometheus: http://localhost:9090"
+          Write-Host "  Mock API:   http://localhost:8080"
+          Write-Host "=========================================="
