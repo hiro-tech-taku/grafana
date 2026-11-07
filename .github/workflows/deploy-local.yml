@@ -10,6 +10,10 @@ jobs:
   deploy:
     runs-on: self-hosted  # ローカルPCのSelf-hosted Runnerで実行
 
+    defaults:
+      run:
+        shell: pwsh
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,33 +35,78 @@ jobs:
         run: Start-Sleep -Seconds 15
 
       # ヘルスチェック：Grafana
+      # - name: Health check - Grafana
+      #   run: |
+      #     $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 10
+      #     if ($response.StatusCode -ne 200) {
+      #       Write-Error "Grafana health check failed: $($response.StatusCode)"
+      #       exit 1
+      #     }
+      #     Write-Host "Grafana is running: $($response.StatusCode)"
+
       - name: Health check - Grafana
         run: |
-          $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 10
-          if ($response.StatusCode -ne 200) {
-            Write-Error "Grafana health check failed: $($response.StatusCode)"
+          $response = Invoke-WebRequest `
+            -Uri "http://localhost:3000" `
+            -UseBasicParsing `
+            -TimeoutSec 10 `
+            -ErrorAction SilentlyContinue
+
+          if ($null -eq $response -or $response.StatusCode -ne 200) {
+            Write-Error "Grafana health check failed"
             exit 1
           }
+
           Write-Host "Grafana is running: $($response.StatusCode)"
 
-      # ヘルスチェック：Prometheus
+      # # ヘルスチェック：Prometheus
+      # - name: Health check - Prometheus
+      #   run: |
+      #     $response = Invoke-WebRequest -Uri "http://localhost:9090/-/healthy" -UseBasicParsing -TimeoutSec 10
+      #     if ($response.StatusCode -ne 200) {
+      #       Write-Error "Prometheus health check failed: $($response.StatusCode)"
+      #       exit 1
+      #     }
+      #     Write-Host "Prometheus is running: $($response.StatusCode)"
+
       - name: Health check - Prometheus
         run: |
-          $response = Invoke-WebRequest -Uri "http://localhost:9090/-/healthy" -UseBasicParsing -TimeoutSec 10
-          if ($response.StatusCode -ne 200) {
-            Write-Error "Prometheus health check failed: $($response.StatusCode)"
+          $response = Invoke-WebRequest `
+            -Uri "http://localhost:9090/-/healthy" `
+            -UseBasicParsing `
+            -TimeoutSec 10 `
+            -ErrorAction SilentlyContinue
+
+          if ($null -eq $response -or $response.StatusCode -ne 200) {
+            Write-Error "Prometheus health check failed"
             exit 1
           }
+
           Write-Host "Prometheus is running: $($response.StatusCode)"
 
-      # ヘルスチェック：Mock API
+      # # ヘルスチェック：Mock API
+      # - name: Health check - Mock API
+      #   run: |
+      #     $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 10
+      #     if ($response.StatusCode -ne 200) {
+      #       Write-Error "Mock API health check failed: $($response.StatusCode)"
+      #       exit 1
+      #     }
+      #     Write-Host "Mock API is running: $($response.StatusCode)"
+
       - name: Health check - Mock API
         run: |
-          $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 10
-          if ($response.StatusCode -ne 200) {
-            Write-Error "Mock API health check failed: $($response.StatusCode)"
+          $response = Invoke-WebRequest `
+            -Uri "http://localhost:8080" `
+            -UseBasicParsing `
+            -TimeoutSec 10 `
+            -ErrorAction SilentlyContinue
+
+          if ($null -eq $response -or $response.StatusCode -ne 200) {
+            Write-Error "Mock API health check failed"
             exit 1
           }
+
           Write-Host "Mock API is running: $($response.StatusCode)"
 
       # デプロイ完了通知
