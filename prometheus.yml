@@ -12,7 +12,7 @@ scrape_configs:
       module: [default]
     static_configs:
       - targets:
-          - http://host.docker.internal:8080/metrics/json
+          - http://mock-api:8080/metrics/json
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

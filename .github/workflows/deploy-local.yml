@@ -18,17 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 既存コンテナを停止・削除
+      # 既存コンテナを停止・削除（プロジェクト名を明示することで手動操作と区別しやすくする）
       - name: Stop existing containers
-        run: docker compose down --remove-orphans
+        run: docker compose -p grafana down --remove-orphans
 
       # イメージを再ビルド（mock-api の Dockerfile を含む）
       - name: Build Docker images
-        run: docker compose build --no-cache
+        run: docker compose -p grafana build --no-cache
 
       # バックグラウンドで起動
       - name: Start containers
-        run: docker compose up -d
+        run: docker compose -p grafana up -d
 
       # 起動待ち（Grafana は起動に数秒かかるため）
       - name: Wait for services to be ready
